@@ -63,20 +63,52 @@ class ClientServiceThread extends Thread {
 
             //Se obtiene el flujo entrante desde el cliente
             BufferedReader entrada = new BufferedReader(new InputStreamReader(cs.getInputStream(),"UTF-8"));
-            ArrayList<String> msgList = new ArrayList<String>();
+            ArrayList<String> msgList = new ArrayList<>();
 
             while ((mensajeServidor = entrada.readLine()) != null) //Mientras haya mensajes desde el cliente
             {
                 if (mensajeServidor.isEmpty()){
-                    salidaCliente.println("HTTP/1.1 200 OK\n" +
-                            "Server: Java/1.0.0 (MacOS)\n" +
-                            "Content-Type: text/html\n" +
-                            "Connection: close\n\n" +
-                            "<html>\n" +
-                            "<body>\n" +
-                            "<h1>Hello, World!</h1>\n" +
-                            "</body>\n" +
-                            "</html>\n");
+                    //System.out.println(msgList.get(0));
+                    String[] header = msgList.get(0).split(" ");
+                    System.out.println(header[0]); //Debug, ver cual es el header recibido
+
+                    if (header[0].equals("GET")) {
+                        System.out.println("GET Received.");
+                        switch (header[1]) {
+                            case "/" :
+                                salidaCliente.println("HTTP/1.1 200 OK\n" +
+                                        "Server: Java/1.0.0 (MacOS)\n" +
+                                        "Content-Type: text/html\n" +
+                                        "Connection: close\n\n" +
+                                        "<html>\n" +
+                                        "<body>\n" +
+                                        "<h1>Hello, World!</h1>\n" +
+                                        "</body>\n" +
+                                        "</html>\n");
+                                break;
+                            case "/home_old" :
+                                salidaCliente.println("HTTP/1.1 301 Moved Permanently\n" +
+                                        "Location: http://localhost:1234/\n" +
+                                        "Server: Java/1.0.0 (MacOS)\n" +
+                                        "Content-Type: text/html\n" +
+                                        "Connection: close\n\n");
+                                break;
+                            case "/secret" :
+                                salidaCliente.println("HTTP/1.1 403 Forbidden\n" +
+                                        "Server: Java/1.0.0 (MacOS)\n" +
+                                        "Content-Type: text/html\n" +
+                                        "Connection: close\n\n" +
+                                        "<html>\n" +
+                                        "<body>\n" +
+                                        "<h1>Error!</h1>\n" +
+                                        "<p>Usted no tiene permisos para ver esta pagina.</p>" +
+                                        "</body>\n" +
+                                        "</html>\n");
+                                break;
+                        }
+
+                    }
+
                     entrada.close();
                     break;
                 }
