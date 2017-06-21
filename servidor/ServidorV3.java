@@ -1,14 +1,13 @@
 package sockets.servidor;
 
+import javafx.beans.binding.IntegerBinding;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 public class ServidorV3 //extends Conexion Se hereda de conexión para hacer uso de los sockets y demás
 {
@@ -62,34 +61,19 @@ class ClientServiceThread extends Thread {
 
             //Se obtiene el flujo entrante desde el cliente
             BufferedReader entrada = new BufferedReader(new InputStreamReader(cs.getInputStream(),"UTF-8"));
-            ArrayList<String> msgList = new ArrayList<>();
+            //ArrayList<String> msgList = new ArrayList<>();
 
             //Leemos el header
-            boolean bit = true;
+            String[] header = entrada.readLine().split(" ");
+            Map header_data = new HashMap();
 
             while ((mensajeServidor = entrada.readLine()) != null) //Mientras haya mensajes desde el cliente
             {
-                msgList.add(mensajeServidor);
+                String[] line = mensajeServidor.split(": ");
+                if(!mensajeServidor.isEmpty()) header_data.put(line[0], line[1]);
 
                 if (mensajeServidor.isEmpty()){
-                    System.out.println("HEADER received!");
-                    System.out.println(msgList.get(0));
-
-                    String[] header = msgList.get(0).split(" ");
-
-                    if (header[0].equals("POST") && bit) {
-                        System.out.println("Reading POST Data...");
-                        int size;
-                        String post_msg = "";
-                        while ((size = entrada.read()) != -1) {
-                            char c = (char)size;
-                            post_msg += String.valueOf(c);
-                            byte[] utf8Bytes = post_msg.getBytes("UTF-8");
-                            if (utf8Bytes.length >= 41) break;
-                        }
-                        System.out.println("Read!");
-                        System.out.println(post_msg);
-                    }
+                    System.out.println("Received: "+ header[0] + " " + header[1]);
 
                     if (header[0].equals("GET")) {
                         switch (header[1]) {
@@ -144,6 +128,18 @@ class ClientServiceThread extends Thread {
                         }
 
                     } else if (header[0].equals("POST")) {
+                        System.out.println("Reading POST Data...");
+                        int size;
+                        String post_msg = "";
+                        while ((size = entrada.read()) != -1) {
+                            char c = (char)size;
+                            post_msg += String.valueOf(c);
+                            byte[] utf8Bytes = post_msg.getBytes("UTF-8");
+                            if (utf8Bytes.length >= Integer.parseInt(header_data.get("Content-Length").toString())) break;
+                        }
+                        System.out.println("Read!");
+                        System.out.println(post_msg);
+
                         switch (header[1]) {
                             case "/secret":
                                 salidaCliente.println("HTTP/1.1 200 OK\n" +
@@ -164,7 +160,6 @@ class ClientServiceThread extends Thread {
                     break;
                 }
 
-                //mensajeServidor = entrada.readLine();
             }
 
             System.out.println("Cliente Desconectado.");
