@@ -64,7 +64,7 @@ class ClientServiceThread extends Thread {
 
             //Leemos el header
             String[] header = entrada.readLine().split(" ");
-            Map header_data = new HashMap();
+            HashMap<String, String> header_data = new HashMap<>();
             String authorized_user = "username=root&passwd=rdc2017&action=Ingresar";
             Path access_log = Paths.get("log.txt");
             String ip = cs.getInetAddress().toString().replace("/", "");
