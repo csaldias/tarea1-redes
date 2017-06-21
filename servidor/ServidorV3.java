@@ -1,4 +1,4 @@
-package sockets.servidor;
+package servidor;
 
 import javafx.beans.binding.IntegerBinding;
 
@@ -140,6 +140,8 @@ class ClientServiceThread extends Thread {
                         System.out.println("Read!");
                         System.out.println(post_msg);
 
+                        //TODO: comprobar credenciales
+
                         switch (header[1]) {
                             case "/secret":
                                 salidaCliente.println("HTTP/1.1 200 OK\n" +
@@ -156,6 +158,7 @@ class ClientServiceThread extends Thread {
                         }
                     }
 
+                    //TODO: hacer el log!
                     entrada.close();
                     break;
                 }

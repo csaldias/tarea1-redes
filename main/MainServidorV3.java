@@ -1,7 +1,7 @@
-package sockets.main;
+package main;
 
 import java.io.IOException;
-import sockets.servidor.ServidorV3;
+import servidor.ServidorV3;
 
 
 //Clase principal que hará uso del servidor
