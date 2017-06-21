@@ -1,11 +1,9 @@
 package sockets.servidor;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -58,6 +56,7 @@ class ClientServiceThread extends Thread {
     public void run() {
         try {
             System.out.println("Cliente en línea");
+
             //Se obtiene el flujo de salida del cliente para enviarle mensajes
             PrintWriter salidaCliente = new PrintWriter(cs.getOutputStream(), true);
 
@@ -65,15 +64,34 @@ class ClientServiceThread extends Thread {
             BufferedReader entrada = new BufferedReader(new InputStreamReader(cs.getInputStream(),"UTF-8"));
             ArrayList<String> msgList = new ArrayList<>();
 
+            //Leemos el header
+            boolean bit = true;
+
             while ((mensajeServidor = entrada.readLine()) != null) //Mientras haya mensajes desde el cliente
             {
+                msgList.add(mensajeServidor);
+
                 if (mensajeServidor.isEmpty()){
-                    //System.out.println(msgList.get(0));
+                    System.out.println("HEADER received!");
+                    System.out.println(msgList.get(0));
+
                     String[] header = msgList.get(0).split(" ");
-                    System.out.println(header[0]); //Debug, ver cual es el header recibido
+
+                    if (header[0].equals("POST") && bit) {
+                        System.out.println("Reading POST Data...");
+                        int size;
+                        String post_msg = "";
+                        while ((size = entrada.read()) != -1) {
+                            char c = (char)size;
+                            post_msg += String.valueOf(c);
+                            byte[] utf8Bytes = post_msg.getBytes("UTF-8");
+                            if (utf8Bytes.length >= 41) break;
+                        }
+                        System.out.println("Read!");
+                        System.out.println(post_msg);
+                    }
 
                     if (header[0].equals("GET")) {
-                        System.out.println("GET Received.");
                         switch (header[1]) {
                             case "/" :
                                 salidaCliente.println("HTTP/1.1 200 OK\n" +
@@ -105,14 +123,48 @@ class ClientServiceThread extends Thread {
                                         "</body>\n" +
                                         "</html>\n");
                                 break;
+                            case "/login" :
+                                salidaCliente.println("HTTP/1.1 200 OK\n" +
+                                        "Server: Java/1.0.0 (MacOS)\n" +
+                                        "Content-Type: text/html\n" +
+                                        "Connection: close\n\n" +
+                                        "<html>\n" +
+                                        "<body>\n" +
+                                        "<form action=\"/secret\" method=\"POST\">\n" +
+                                        "  Usuario:<br>\n" +
+                                        "  <input type=\"text\" name=\"username\" >\n" +
+                                        "  <br>\n" +
+                                        "  Contraseña:<br>\n" +
+                                        "  <input type=\"password\" name=\"passwd\" >\n" +
+                                        "  <br><br>\n" +
+                                        "  <input type=\"submit\" name=\"action\" value=\"Ingresar\">\n" +
+                                        "</form>\n" +
+                                        "</body>\n" +
+                                        "</html>\n");
                         }
 
+                    } else if (header[0].equals("POST")) {
+                        switch (header[1]) {
+                            case "/secret":
+                                salidaCliente.println("HTTP/1.1 200 OK\n" +
+                                        "Server: Java/1.0.0 (MacOS)\n" +
+                                        "Content-Type: text/html\n" +
+                                        "Connection: close\n\n" +
+                                        "<html>\n" +
+                                        "<body>\n" +
+                                        "<h1>Error!</h1>\n" +
+                                        "<p>Usted no tiene permisos para ver esta pagina.</p>" +
+                                        "</body>\n" +
+                                        "</html>\n");
+                                break;
+                        }
                     }
 
                     entrada.close();
                     break;
                 }
-                msgList.add(mensajeServidor);
+
+                //mensajeServidor = entrada.readLine();
             }
 
             System.out.println("Cliente Desconectado.");
